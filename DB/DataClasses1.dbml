@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?><Database Name="NAIKI" Class="DataClasses1DataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Connection Mode="WebSettings" ConnectionString="Data Source=pixcilelab;Initial Catalog=NAIKI;Integrated Security=True" SettingsObjectName="System.Configuration.ConfigurationManager.ConnectionStrings" SettingsPropertyName="NAIKIConnectionString" Provider="System.Data.SqlClient" />
+  <Table Name="dbo.Jobs" Member="Jobs">
+    <Type Name="Job">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="JobTypeId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="UserId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="Location" Type="System.String" DbType="VarChar(150) NOT NULL" CanBeNull="false" />
+      <Column Name="FileURL" Type="System.String" DbType="VarChar(50)" CanBeNull="true" />
+      <Column Name="Detail" Type="System.String" DbType="VarChar(1600) NOT NULL" CanBeNull="false" />
+      <Column Name="PostedOn" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="StatusId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="IsActive" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="IsDeleted" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="Job_UserJobLibrary" Member="UserJobLibraries" ThisKey="Id" OtherKey="JobId" Type="UserJobLibrary" />
+      <Association Name="JobType_Job" Member="JobType" ThisKey="JobTypeId" OtherKey="Id" Type="JobType" IsForeignKey="true" />
+      <Association Name="Status_Job" Member="Status" ThisKey="StatusId" OtherKey="Id" Type="Status" IsForeignKey="true" />
+      <Association Name="User_Job" Member="User" ThisKey="UserId" OtherKey="Id" Type="User" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.UserType" Member="UserTypes">
+    <Type Name="UserType">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="TypeName" Type="System.String" DbType="VarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="IsActive" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="UserType_User" Member="Users" ThisKey="Id" OtherKey="UserTypeId" Type="User" />
+    </Type>
+  </Table>
+  <Table Name="dbo.JobType" Member="JobTypes">
+    <Type Name="JobType">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="TypeName" Type="System.String" DbType="VarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="IsActive" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="JobType_Job" Member="Jobs" ThisKey="Id" OtherKey="JobTypeId" Type="Job" />
+    </Type>
+  </Table>
+  <Table Name="dbo.RewardBadges" Member="RewardBadges">
+    <Type Name="RewardBadge">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="BadgeName" Type="System.String" DbType="VarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="IconURL" Type="System.String" DbType="VarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="MileStoneCount" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="CustomHTML" Type="System.String" DbType="VarChar(1600)" CanBeNull="true" />
+      <Column Name="IsActive" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="RewardBadge_UserRewardBadge" Member="UserRewardBadges" ThisKey="Id" OtherKey="RewardBadgeId" Type="UserRewardBadge" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Status" Member="Status">
+    <Type Name="Status">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="StatusName" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="Status_Job" Member="Jobs" ThisKey="Id" OtherKey="StatusId" Type="Job" />
+      <Association Name="Status_UserJobLibrary" Member="UserJobLibraries" ThisKey="Id" OtherKey="StatusId" Type="UserJobLibrary" />
+    </Type>
+  </Table>
+  <Table Name="dbo.UserJobLibrary" Member="UserJobLibraries">
+    <Type Name="UserJobLibrary">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="UserId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="JobId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="ActivatedOn" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="CompletedOn" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Column Name="StatusId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="IsActive" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="IsDeleted" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="Job_UserJobLibrary" Member="Job" ThisKey="JobId" OtherKey="Id" Type="Job" IsForeignKey="true" />
+      <Association Name="Status_UserJobLibrary" Member="Status" ThisKey="StatusId" OtherKey="Id" Type="Status" IsForeignKey="true" />
+      <Association Name="User_UserJobLibrary" Member="User" ThisKey="UserId" OtherKey="Id" Type="User" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.UserRewardBadges" Member="UserRewardBadges">
+    <Type Name="UserRewardBadge">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="UserId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="RewardBadgeId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="EarnedOn" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="IsActive" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="IsDeleted" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="RewardBadge_UserRewardBadge" Member="RewardBadge" ThisKey="RewardBadgeId" OtherKey="Id" Type="RewardBadge" IsForeignKey="true" />
+      <Association Name="User_UserRewardBadge" Member="User" ThisKey="UserId" OtherKey="Id" Type="User" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Users" Member="Users">
+    <Type Name="User">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="UserName" Type="System.String" DbType="VarChar(150) NOT NULL" CanBeNull="false" />
+      <Column Name="Email" Type="System.String" DbType="VarChar(150) NOT NULL" CanBeNull="false" />
+      <Column Name="LoginID" Type="System.String" DbType="VarChar(150)" CanBeNull="true" />
+      <Column Name="Password" Type="System.String" DbType="VarChar(150)" CanBeNull="true" />
+      <Column Name="PhoneNumber" Type="System.String" DbType="VarChar(20)" CanBeNull="true" />
+      <Column Name="UserTypeId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="IsExternal" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="RegisteredLocation" Type="System.String" DbType="VarChar(150)" CanBeNull="true" />
+      <Column Name="DeviceId" Type="System.String" DbType="VarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="RegisteredOn" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="IsActive" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="IsDeleted" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="IsVerified" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="User_Job" Member="Jobs" ThisKey="Id" OtherKey="UserId" Type="Job" />
+      <Association Name="User_UserJobLibrary" Member="UserJobLibraries" ThisKey="Id" OtherKey="UserId" Type="UserJobLibrary" />
+      <Association Name="User_UserRewardBadge" Member="UserRewardBadges" ThisKey="Id" OtherKey="UserId" Type="UserRewardBadge" />
+      <Association Name="User_UserSetting" Member="UserSettings" ThisKey="Id" OtherKey="UserId" Type="UserSetting" />
+      <Association Name="UserType_User" Member="UserType" ThisKey="UserTypeId" OtherKey="Id" Type="UserType" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.UserSetting" Member="UserSettings">
+    <Type Name="UserSetting">
+      <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="UserId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="CurrentLoction" Type="System.String" DbType="VarChar(150) NOT NULL" CanBeNull="false" />
+      <Column Name="RadiusInMile" Type="System.Double" DbType="Float NOT NULL" CanBeNull="false" />
+      <Column Name="LastUpdated" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Column Name="IsActive" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="IsDeleted" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="User_UserSetting" Member="User" ThisKey="UserId" OtherKey="Id" Type="User" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Function Name="dbo.CloseUserAccount" Method="CloseUserAccount">
+    <Parameter Name="UserId" Parameter="userId" Type="System.Int32" DbType="Int" />
+    <Parameter Name="UserTypeId" Parameter="userTypeId" Type="System.Int32" DbType="Int" />
+    <Return Type="System.Int32" />
+  </Function>
+</Database>
