@@ -10,7 +10,7 @@ namespace NAIKI.Backbone
     {
 
         private static String _Naiki = String.Empty;
-        public static String SerBeeConnectionString
+        public static String NAIKIConnectionString
         {
             get
             {

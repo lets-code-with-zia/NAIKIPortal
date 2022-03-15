@@ -59,7 +59,11 @@ namespace NAIKI.DB
     partial void DeleteUser(User instance);
     #endregion
 		
-		
+		public DataClasses1DataContext() : 
+				base(global::System.Configuration.ConfigurationManager.ConnectionStrings["NAIKIConnectionString"].ConnectionString, mappingSource)
+		{
+			OnCreated();
+		}
 		
 		public DataClasses1DataContext(string connection) : 
 				base(connection, mappingSource)
@@ -155,13 +159,6 @@ namespace NAIKI.DB
 			{
 				return this.GetTable<User>();
 			}
-		}
-		
-		[global::System.Data.Linq.Mapping.FunctionAttribute(Name="dbo.CloseUserAccount")]
-		public int CloseUserAccount([global::System.Data.Linq.Mapping.ParameterAttribute(Name="UserId", DbType="Int")] System.Nullable<int> userId, [global::System.Data.Linq.Mapping.ParameterAttribute(Name="UserTypeId", DbType="Int")] System.Nullable<int> userTypeId)
-		{
-			IExecuteResult result = this.ExecuteMethodCall(this, ((MethodInfo)(MethodInfo.GetCurrentMethod())), userId, userTypeId);
-			return ((int)(result.ReturnValue));
 		}
 	}
 	
@@ -1088,7 +1085,7 @@ namespace NAIKI.DB
 		
 		private int _Id;
 		
-		private bool _StatusName;
+		private string _StatusName;
 		
 		private EntitySet<Job> _Jobs;
 		
@@ -1100,7 +1097,7 @@ namespace NAIKI.DB
     partial void OnCreated();
     partial void OnIdChanging(int value);
     partial void OnIdChanged();
-    partial void OnStatusNameChanging(bool value);
+    partial void OnStatusNameChanging(string value);
     partial void OnStatusNameChanged();
     #endregion
 		
@@ -1131,8 +1128,8 @@ namespace NAIKI.DB
 			}
 		}
 		
-		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_StatusName", DbType="Bit NOT NULL")]
-		public bool StatusName
+		[global::System.Data.Linq.Mapping.ColumnAttribute(Storage="_StatusName", DbType= "VarChar(50) NOT NULL")]
+		public string StatusName
 		{
 			get
 			{

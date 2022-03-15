@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?><Database Name="NAIKI" Class="DataClasses1DataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
-  <Connection Mode="WebSettings" ConnectionString="Data Source=pixcilelab;Initial Catalog=NAIKI;Integrated Security=True" SettingsObjectName="System.Configuration.ConfigurationManager.ConnectionStrings" SettingsPropertyName="NAIKIConnectionString" Provider="System.Data.SqlClient" />
+  <Connection Mode="WebSettings" ConnectionString="Data Source=0.0.0.0:1433;Initial Catalog=NAIKI;Integrated Security=True" SettingsObjectName="System.Configuration.ConfigurationManager.ConnectionStrings" SettingsPropertyName="NAIKIConnectionString" Provider="System.Data.SqlClient" />
   <Table Name="dbo.Jobs" Member="Jobs">
     <Type Name="Job">
       <Column Name="Id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
@@ -116,9 +116,4 @@
       <Association Name="UserType_User" Member="UserType" ThisKey="UserTypeId" OtherKey="Id" Type="UserType" IsForeignKey="true" />
     </Type>
   </Table>
-  <Function Name="dbo.CloseUserAccount" Method="CloseUserAccount">
-    <Parameter Name="UserId" Parameter="userId" Type="System.Int32" DbType="Int" />
-    <Parameter Name="UserTypeId" Parameter="userTypeId" Type="System.Int32" DbType="Int" />
-    <Return Type="System.Int32" />
-  </Function>
 </Database>

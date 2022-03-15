@@ -2,6 +2,7 @@
 using NAIKI.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
 
@@ -85,34 +86,127 @@ namespace NAIKI.Api
                 #region UpdateMyLocation
                 if (methodName.ToLower() == "UpdateMyLocation".ToLower())
                 {
-                    
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
+                    if (string.IsNullOrEmpty(context.Request.QueryString["coordinates"]))
+                    {
+                        throw new Exception("Kindly provide current location");
+                    }
+                    var location = context.Request.QueryString["coordinates"];
+                    UserManagement oUser = new UserManagement();
+                    oUser.UpdateMyLocation(userId , location);
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "ErrorMessage", "" } }));
+
                 }
                 #endregion
 
                 #region GetLocationsByUserId
                 if (methodName.ToLower() == "GetLocationsByUserId".ToLower())
                 {
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
+                    UserManagement oUser = new UserManagement();
+                    string location = oUser.GetLocationsByUserId(userId);
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "UserLocation", location } }));
                 }
                 #endregion
 
                 #region GetJobsByUserId
                 if (methodName.ToLower() == "GetJobsByUserId".ToLower())
                 {
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
 
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new UserManagement().GetJobsByUserId(userId) } }));
                 }
                 #endregion
 
                 #region GetJobsByLocation
                 if (methodName.ToLower() == "GetJobsByLocation".ToLower())
                 {
+                    if (string.IsNullOrEmpty(context.Request.QueryString["coordinates"]))
+                    {
+                        throw new Exception("Kindly provide current location");
+                    }
+                    var location = context.Request.QueryString["coordinates"];
 
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new UserManagement().GetJobsByLocation(location) } }));
                 }
                 #endregion
 
                 #region PostJob
                 if (methodName.ToLower() == "PostJob".ToLower())
                 {
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
+
+                    int jobTypeId = 0;
+                    int.TryParse(context.Request.QueryString["jTID"] , out jobTypeId);
+                    if (jobTypeId == 0)
+                    {
+                        throw new Exception("Invalid or no job type form");
+                    }
+
+                    if (string.IsNullOrEmpty(context.Request.QueryString["coordinates"]))
+                    {
+                        throw new Exception("Kindly provide current location");
+                    }
+
+                    if (string.IsNullOrEmpty(context.Request.QueryString["details"]))
+                    {
+                        throw new Exception("Kindly provide Job details");
+                    }
+                    
+                    if(context.Request.Files.Count <= 0)
+                    {
+                        throw new Exception("Kindly provide location Image");
+                    }
+
+                    var location = context.Request.QueryString["coordinates"];
+                    var jobDetails = context.Request.QueryString["details"];
+                    var file = context.Request.Files[0];
+                    JobsInfo oJob = new JobsInfo();
+                    oJob.UserId = userId;
+                    oJob.Location = location;
+                    oJob.JobTypeId = jobTypeId;
+                    oJob.StatusId = 1;
+                    oJob.JobDetails = jobDetails;
+                    oJob.FileURL = file.FileName;
+                    new UserManagement().PostJob(oJob);
+                    
+                    file.SaveAs(context.Server.MapPath("~/JobFiles/" + oJob.Id + file.FileName));
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+
+                    context.Response.Write(jsonSerializer.Serialize(oJob));
 
                 }
                 #endregion
@@ -120,7 +214,25 @@ namespace NAIKI.Api
                 #region AcceptJob
                 if (methodName.ToLower() == "AcceptJob".ToLower())
                 {
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
+                    int jobTypeId = 0;
+                    int.TryParse(context.Request.QueryString["jID"], out jobTypeId);
+                    if (jobTypeId == 0)
+                    {
+                        throw new Exception("Invalid or no job type form");
+                    }
+                    JobFactory oFactory = new JobFactory();
 
+                    oFactory.AcceptJob(userId , jobTypeId);
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "ErrorMessage", "" } }));
                 }
                 #endregion
 
@@ -165,7 +277,7 @@ namespace NAIKI.Api
                 context.Response.ContentType = "application/json";
                 context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
-                context.Response.Write(new Dictionary<string, dynamic>() { { "IsError", true}, { "ErrorMessage", ex.Message } });
+                context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", true}, { "ErrorMessage", ex.Message } }));
                 
             }
             

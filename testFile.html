@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+
+
+    <input id="fileupload" type="file" name="fileupload" />
+    <button id="upload-button" onclick="uploadFile()"> Upload </button>
+    <script>
+        async function uploadFile() {
+            let formData = new FormData();
+            formData.append("file", fileupload.files[0]);
+            await fetch('/api/apicall.ashx?methodname=PostJob&uID=1&jTID=1&coordinates=100,100&details=some details', {
+                method: "POST",
+                body: formData
+            }).then((response) => { console.log(response); });
+            alert('The file has been uploaded successfully.');
+        }
+    </script>
+</body>
+</html>
