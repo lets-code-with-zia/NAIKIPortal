@@ -240,6 +240,25 @@ namespace NAIKI.Api
                 if (methodName.ToLower() == "MarkAsDoneJob".ToLower())
                 {
 
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
+                    int jobTypeId = 0;
+                    int.TryParse(context.Request.QueryString["jID"], out jobTypeId);
+                    if (jobTypeId == 0)
+                    {
+                        throw new Exception("Invalid or no job type form");
+                    }
+                    JobFactory oFactory = new JobFactory();
+
+                    oFactory.MarkAsDoneJob(userId, jobTypeId);
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "ErrorMessage", "" } }));
                 }
                 #endregion
 
