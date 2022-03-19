@@ -1,6 +1,7 @@
 ﻿using NAIKI.Backbone;
 using NAIKI.DB;
 using NAIKI.Modals;
+using NAIKI.Utilis;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -41,6 +42,15 @@ namespace NAIKI.Services
                     eUser.IsDeleted = false;
                     eUser.IsVerified = true;
                     eDataBase.Users.InsertOnSubmit(eUser);
+                    eDataBase.SubmitChanges();
+                    UserSetting eSetting = new UserSetting();
+                    eSetting.CurrentLoction = oUser.RegisteredLocation;
+                    eSetting.RadiusInMile = oUser.MileRadius;
+                    eSetting.LastUpdated = DateTime.Now;
+                    eSetting.UserId = eUser.Id;
+                    eSetting.IsActive = true;
+                    eSetting.IsDeleted = false;
+                    eDataBase.UserSettings.InsertOnSubmit(eSetting);
                     eDataBase.SubmitChanges();
                     oUser.Id = eUser.Id;
                 }
@@ -102,6 +112,12 @@ namespace NAIKI.Services
                     oUser.RegisteredOn = eUser.RegisteredOn;
                     oUser.RegisteredOnString = eUser.RegisteredOn.ToString(ConfigurationManager.AppSettings["DateFormat"]);
                     oUser.ProfileImageURL = eUser.ImageURL;
+                    var eSetting = eDataBase.UserSettings.Where(eSData => eSData.UserId == eUser.Id & eSData.IsActive == true & eSData.IsDeleted == false).FirstOrDefault();
+                    if(eSetting != null)
+                    {
+                        oUser.CurrentLocation = eSetting.CurrentLoction;
+                        oUser.MileRadius = eSetting.RadiusInMile;
+                    }
 
                 }
             }
@@ -115,19 +131,21 @@ namespace NAIKI.Services
             return oUser;
         }
 
-        public void UpdateMyLocation(int uID , string location)
+        public void UpdateMyLocation(int uID , string location, double mileRadius)
         {
             try
             {
                 using (DataClasses1DataContext eDataBase = new DataClasses1DataContext(ConnectionString.NAIKIConnectionString))
                 {
-                    User eUser = new User();
-                    eUser = eDataBase.Users.Where(eUData => eUData.Id == uID && eUData.IsDeleted == false && eUData.IsActive == true).FirstOrDefault();
-                    if (eUser == null)
+                   
+                    var eSetting = eDataBase.UserSettings.Where(eSData => eSData.UserId == uID && eSData.IsDeleted == false && eSData.IsActive == true).FirstOrDefault();
+                    if (eSetting == null)
                     {
-                        throw new Exception("Invalid or no user id found");
+                        throw new Exception("Invalid or no data found");
                     }
-                    eUser.RegisteredLocation = location;
+                    eSetting.CurrentLoction = location;
+                    eSetting.RadiusInMile = mileRadius;
+                    eSetting.LastUpdated = DateTime.Now;
                     eDataBase.SubmitChanges();
                 }
             }
@@ -138,56 +156,29 @@ namespace NAIKI.Services
             }
         }
 
-        public string GetLocationsByUserId(int uID)
+        public List<LocationInfo> GetLocationsByUserId(int uID)
         {
             try
             {
+                List<LocationInfo> oLocations = new List<LocationInfo>();
                 using (DataClasses1DataContext eDataBase = new DataClasses1DataContext(ConnectionString.NAIKIConnectionString))
                 {
-                    User eUser = new User();
-                    eUser = eDataBase.Users.Where(eUData => eUData.Id == uID && eUData.IsDeleted == false && eUData.IsActive == true).FirstOrDefault();
-                    if (eUser == null)
+                    var eSettings = eDataBase.UserSettings.Where(eSData => eSData.UserId == uID && eSData.IsDeleted == false && eSData.IsActive == true).ToList();
+                    if (eSettings.Count <= 0)
                     {
-                        throw new Exception("Invalid or no user id found");
+                        throw new Exception("Invalid or no data found");
                     }
-                    string location = eUser.RegisteredLocation;
-                    return location;
-                }
-            }
-            catch (Exception ex)
-            {
-
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public List<JobsInfo> GetJobsByUserId(int uID)
-        {
-            try
-            {
-                using (DataClasses1DataContext eDataBase = new DataClasses1DataContext(ConnectionString.NAIKIConnectionString))
-                {
-                    List<Job> eJobs = new List<Job>();
-                    List<JobsInfo> oJobs = new List<JobsInfo>();
-                    eJobs = eDataBase.Jobs.Where(eUData => eUData.UserId == uID && eUData.IsDeleted == false && eUData.IsActive == true).ToList();
-                    foreach (var item in eJobs)
+                    foreach (var eSetting in eSettings)
                     {
-                        JobsInfo oJob = new JobsInfo();
-                        oJob.Id = item.Id;
-                        oJob.UserId = item.UserId;
-                        oJob.JobTypeName = item.JobType.TypeName;
-                        oJob.JobDetails = item.Detail;
-                        oJob.FileURL = ConfigurationManager.AppSettings["BaseURL"] + "JobFiles/" + item.FileURL;
-                        oJob.Location = item.Location;
-                        oJob.UserName = item.User.UserName;
-                        oJob.StatusName = item.Status.StatusName;
-                        oJob.PostedOn = item.PostedOn;
-                        oJob.PostedOnString = item.PostedOn.ToString(ConfigurationManager.AppSettings["ShortDateFormat"]);
-                        oJobs.Add(oJob);
-
+                        LocationInfo oLocation = new LocationInfo();
+                        oLocation.Id = eSetting.Id;
+                        oLocation.Cordinates = eSetting.CurrentLoction;
+                        oLocation.MileRadius = eSetting.RadiusInMile;
+                        oLocation.LastUpdated = eSetting.LastUpdated;
+                        oLocation.LastUpdatedString = new CommonMethods().ToShortDateTime(eSetting.LastUpdated);
+                        oLocations.Add(oLocation);
                     }
-
-                    return oJobs;
+                    return oLocations;
                 }
             }
             catch (Exception ex)
@@ -197,69 +188,6 @@ namespace NAIKI.Services
             }
         }
 
-        public List<JobsInfo> GetJobsByLocation(string location)
-        {
-            try
-            {
-                using (DataClasses1DataContext eDataBase = new DataClasses1DataContext(ConnectionString.NAIKIConnectionString))
-                {
-                    List<Job> eJobs = new List<Job>();
-                    List<JobsInfo> oJobs = new List<JobsInfo>();
-                    eJobs = eDataBase.Jobs.Where(eJData => eJData.Location == location && eJData.IsDeleted == false && eJData.IsActive == true).ToList();
-                    foreach (var item in eJobs)
-                    {
-                        JobsInfo oJob = new JobsInfo();
-                        oJob.Id = item.Id;
-                        oJob.UserId = item.UserId;
-                        oJob.JobTypeName = item.JobType.TypeName;
-                        oJob.JobDetails = item.Detail;
-                        oJob.FileURL = ConfigurationManager.AppSettings["BaseURL"] + "JobFiles/" + item.FileURL;
-                        oJob.Location = item.Location;
-                        oJob.UserName = item.User.UserName;
-                        oJob.StatusName = item.Status.StatusName;
-                        oJob.PostedOn = item.PostedOn;
-                        oJob.PostedOnString = item.PostedOn.ToString(ConfigurationManager.AppSettings["ShortDateFormat"]);
-                        oJobs.Add(oJob);
-
-                    }
-
-                    return oJobs;
-                }
-            }
-            catch (Exception ex)
-            {
-
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public void PostJob(JobsInfo oJob)
-        {
-            try
-            {
-                using (DataClasses1DataContext eDataBase = new DataClasses1DataContext(ConnectionString.NAIKIConnectionString))
-                {
-                    Job eJob = new Job();
-                    eJob.UserId = oJob.UserId;
-                    eJob.JobTypeId = oJob.JobTypeId;
-                    eJob.StatusId = oJob.StatusId;
-                    eJob.Location = oJob.Location;
-                    eJob.Detail = oJob.JobDetails;
-                    eJob.IsActive = true;
-                    eJob.IsDeleted = false;
-                    eJob.PostedOn = DateTime.Now;
-                    eDataBase.Jobs.InsertOnSubmit(eJob);
-                    eDataBase.SubmitChanges();
-                    eJob.FileURL = eJob.Id + oJob.FileURL;
-                    eDataBase.SubmitChanges();
-                    oJob.Id = eJob.Id;
-                }
-            }
-            catch (Exception ex)
-            {
-
-                throw new Exception(ex.Message);
-            }
-        }
+       
     }
 }

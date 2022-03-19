@@ -68,6 +68,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Images\BadgeIcons\3652222.png" />
+    <Content Include="Images\BadgeIcons\4549643.png" />
+    <Content Include="Images\BadgeIcons\9453988.png" />
     <Content Include="testFile.html" />
     <Content Include="Web.config" />
   </ItemGroup>
@@ -82,11 +85,17 @@
       <DependentUpon>DataClasses1.dbml</DependentUpon>
     </Compile>
     <Compile Include="DB\DataClasses12.designer.cs" />
+    <Compile Include="Modals\BadgeInfo.cs" />
     <Compile Include="Modals\JobsInfo.cs" />
+    <Compile Include="Modals\LocationInfo.cs" />
     <Compile Include="Modals\UserInfo.cs" />
+    <Compile Include="Modals\UserLibraryInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\JobFactory.cs" />
+    <Compile Include="Services\RewardManagement.cs" />
     <Compile Include="Services\UserManagement.cs" />
+    <Compile Include="Utilis\CommonMethods.cs" />
+    <Compile Include="Utilis\NotificationsManagement.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Api\apicall.ashx" />

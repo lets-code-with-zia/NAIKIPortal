@@ -92,13 +92,19 @@ namespace NAIKI.Api
                     {
                         throw new Exception("Invalid or no user id found");
                     }
+                    double mileRadius = 0;
+                    double.TryParse(context.Request.QueryString["radius"], out mileRadius);
+                    if (mileRadius == 0)
+                    {
+                        throw new Exception("Kindly provide radius in miles");
+                    }
                     if (string.IsNullOrEmpty(context.Request.QueryString["coordinates"]))
                     {
                         throw new Exception("Kindly provide current location");
                     }
                     var location = context.Request.QueryString["coordinates"];
                     UserManagement oUser = new UserManagement();
-                    oUser.UpdateMyLocation(userId , location);
+                    oUser.UpdateMyLocation(userId , location, mileRadius);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
@@ -117,16 +123,16 @@ namespace NAIKI.Api
                         throw new Exception("Invalid or no user id found");
                     }
                     UserManagement oUser = new UserManagement();
-                    string location = oUser.GetLocationsByUserId(userId);
+                    var oLocations = oUser.GetLocationsByUserId(userId);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "UserLocation", location } }));
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oLocations", oLocations } }));
                 }
                 #endregion
 
-                #region GetJobsByUserId
-                if (methodName.ToLower() == "GetJobsByUserId".ToLower())
+                #region GetJobsByUserLocation
+                if (methodName.ToLower() == "GetJobsByUserLocation".ToLower())
                 {
                     int userId = 0;
                     int.TryParse(context.Request.QueryString["uID"], out userId);
@@ -138,7 +144,7 @@ namespace NAIKI.Api
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new UserManagement().GetJobsByUserId(userId) } }));
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new JobFactory().GetJobsByUserLocation(userId) } }));
                 }
                 #endregion
 
@@ -154,7 +160,7 @@ namespace NAIKI.Api
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new UserManagement().GetJobsByLocation(location) } }));
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new JobFactory().GetJobsByLocation(location) } }));
                 }
                 #endregion
 
@@ -187,22 +193,22 @@ namespace NAIKI.Api
                     
                     if(context.Request.Files.Count <= 0)
                     {
-                        throw new Exception("Kindly provide location Image");
+                        //throw new Exception("Kindly provide location Image");
                     }
 
                     var location = context.Request.QueryString["coordinates"];
                     var jobDetails = context.Request.QueryString["details"];
-                    var file = context.Request.Files[0];
+                    //var file = context.Request.Files[0];
                     JobsInfo oJob = new JobsInfo();
                     oJob.UserId = userId;
                     oJob.Location = location;
                     oJob.JobTypeId = jobTypeId;
                     oJob.StatusId = 1;
                     oJob.JobDetails = jobDetails;
-                    oJob.FileURL = file.FileName;
-                    new UserManagement().PostJob(oJob);
+                    oJob.FileURL = "";
+                    new JobFactory().PostJob(oJob);
                     
-                    file.SaveAs(context.Server.MapPath("~/JobFiles/" + oJob.Id + file.FileName));
+                    //file.SaveAs(context.Server.MapPath("~/JobFiles/" + oJob.Id + file.FileName));
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
@@ -240,9 +246,7 @@ namespace NAIKI.Api
                 if (methodName.ToLower() == "MarkAsDoneJob".ToLower())
                 {
 
-<<<<<<< HEAD
 
-=======
                     int userId = 0;
                     int.TryParse(context.Request.QueryString["uID"], out userId);
                     if (userId == 0)
@@ -262,35 +266,66 @@ namespace NAIKI.Api
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
                     context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "ErrorMessage", "" } }));
->>>>>>> e629cc9232b17e542fc0682ba33cdee871e97af2
                 }
                 #endregion
 
                 #region GetMyJobs
                 if (methodName.ToLower() == "GetMyJobs".ToLower())
                 {
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
 
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new JobFactory().GetJobsByUserId(userId) } }));
                 }
                 #endregion
 
                 #region GetMyLibrary
                 if (methodName.ToLower() == "GetMyLibrary".ToLower())
                 {
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
 
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
+
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new JobFactory().GetMyLibrary(userId) } }));
                 }
                 #endregion
 
                 #region GetAllBadges
                 if (methodName.ToLower() == "GetAllBadges".ToLower())
                 {
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new RewardManagement().GetAllBadges() } }));
                 }
                 #endregion
 
                 #region GetBadgesByUserId
                 if (methodName.ToLower() == "GetBadgesByUserId".ToLower())
                 {
+                    int userId = 0;
+                    int.TryParse(context.Request.QueryString["uID"], out userId);
+                    if (userId == 0)
+                    {
+                        throw new Exception("Invalid or no user id found");
+                    }
+                    context.Response.ContentType = "application/json";
+                    context.Response.ContentEncoding = System.Text.Encoding.UTF8;
 
+                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new RewardManagement().GetBadgesByUserId(userId) } }));
                 }
                 #endregion
 

@@ -17,6 +17,8 @@ namespace NAIKI.Modals
         public string ProfileImageURL { get; set; }
         public string PhoneNumber { get; set; }
         public string RegisteredLocation { get; set; }
+        public string CurrentLocation { get; set; }
+        public double MileRadius { get; set; }
         public DateTime RegisteredOn { get; set; }
         public string RegisteredOnString { get; set; }
         public string DeviceId { get; set; }
