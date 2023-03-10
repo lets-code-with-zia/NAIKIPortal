@@ -1,7 +1,10 @@
 ﻿using NAIKI.Modals;
 using NAIKI.Services;
+using NAIKI.Utilis;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -23,43 +26,32 @@ namespace NAIKI.Api
             var jsonString = String.Empty;
 
             var methodName = Convert.ToString(context.Request.QueryString["methodName"]);
-
+            Dictionary<string, dynamic> dict = new Dictionary<string, dynamic>();
             try
             {
                 #region Login
                 if (methodName.ToLower() == "Login".ToLower())
                 {
-                    if (string.IsNullOrEmpty(context.Request.QueryString["loginId"]))
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
+                    {
+                        jsonString = inputStream.ReadToEnd();
+                    }
+                    UserInfo oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
+                    if (string.IsNullOrEmpty(oUser.LoginId))
                     {
                         throw new Exception("Kindly provide login ID");
                     }
-
-                    if (string.IsNullOrEmpty(context.Request.QueryString["isExternal"]))
-                    {
-                        throw new Exception("Kindly mention account type");
-                    }
-
-                    var isExternal = false;
-                    try
-                    {
-                        isExternal = Convert.ToBoolean(context.Request.QueryString["isExternal"]);
-                    }
-                    catch (Exception ex)
-                    {
-
-                        throw new Exception("Kindly mention account type");
-                    }
-
-                    if(!isExternal & string.IsNullOrEmpty(context.Request.QueryString["password"]))
+                    if(!oUser.IsExternal & string.IsNullOrEmpty(oUser.Password))
                     {
                         throw new Exception("Kindly provide password");
                     }
-
-                    var loginId = context.Request.QueryString["loginId"];
-                    var password = context.Request.QueryString["password"];
+                    oUser = new UserManagement().Login(oUser.LoginId, oUser.Password, oUser.IsExternal);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", oUser);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-                    context.Response.Write(jsonSerializer.Serialize(new UserManagement().Login(loginId, password, isExternal)));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
                     return;
 
                 }
@@ -76,9 +68,12 @@ namespace NAIKI.Api
 
                     var oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
                     new UserManagement().RegisterUser(oUser);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", oUser);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-                    context.Response.Write(jsonSerializer.Serialize(oUser));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
                     return;
                 }
                 #endregion
@@ -86,29 +81,31 @@ namespace NAIKI.Api
                 #region UpdateMyLocation
                 if (methodName.ToLower() == "UpdateMyLocation".ToLower())
                 {
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
                     }
-                    double mileRadius = 0;
-                    double.TryParse(context.Request.QueryString["radius"], out mileRadius);
-                    if (mileRadius == 0)
+                    UserInfo oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
+
+                    if (oUser.Id == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    if (oUser.MileRadius == 0)
                     {
                         throw new Exception("Kindly provide radius in miles");
                     }
-                    if (string.IsNullOrEmpty(context.Request.QueryString["coordinates"]))
+                    if (string.IsNullOrEmpty(oUser.CurrentLocation))
                     {
                         throw new Exception("Kindly provide current location");
                     }
-                    var location = context.Request.QueryString["coordinates"];
-                    UserManagement oUser = new UserManagement();
-                    oUser.UpdateMyLocation(userId , location, mileRadius);
+                    new UserManagement().UpdateMyLocation(oUser.Id , oUser.CurrentLocation, oUser.MileRadius);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "ErrorMessage", "" } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
 
                 }
                 #endregion
@@ -116,103 +113,123 @@ namespace NAIKI.Api
                 #region GetLocationsByUserId
                 if (methodName.ToLower() == "GetLocationsByUserId".ToLower())
                 {
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
                     }
-                    UserManagement oUser = new UserManagement();
-                    var oLocations = oUser.GetLocationsByUserId(userId);
+                    UserInfo oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
+                    if (oUser.Id == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    var oLocations = new UserManagement().GetLocationsByUserId(oUser.Id);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", oLocations);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oLocations", oLocations } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
                 #region GetJobsByUserLocation
                 if (methodName.ToLower() == "GetJobsByUserLocation".ToLower())
                 {
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
                     }
-
+                    UserInfo oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
+                    if (oUser.Id == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    var oJobs = new JobFactory().GetJobsByUserLocation(oUser.Id);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", oJobs);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new JobFactory().GetJobsByUserLocation(userId) } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
                 #region GetJobsByLocation
                 if (methodName.ToLower() == "GetJobsByLocation".ToLower())
                 {
-                    if (string.IsNullOrEmpty(context.Request.QueryString["coordinates"]))
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
+                    {
+                        jsonString = inputStream.ReadToEnd();
+                    }
+                    UserInfo oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
+                    if (string.IsNullOrEmpty(oUser.CurrentLocation))
                     {
                         throw new Exception("Kindly provide current location");
                     }
-                    var location = context.Request.QueryString["coordinates"];
-
+                    var oJobs = new JobFactory().GetJobsByLocation(oUser.CurrentLocation);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", oJobs);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new JobFactory().GetJobsByLocation(location) } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
                 #region PostJob
                 if (methodName.ToLower() == "PostJob".ToLower())
                 {
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
+                    }
+                    JobsInfo oJob = jsonSerializer.Deserialize<JobsInfo>(jsonString);
+                    if (oJob.UserId == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    if (oJob.JobTypeId == 0)
+                    {
+                        throw new Exception("Invalid or no job type found");
                     }
 
-                    int jobTypeId = 0;
-                    int.TryParse(context.Request.QueryString["jTID"] , out jobTypeId);
-                    if (jobTypeId == 0)
-                    {
-                        throw new Exception("Invalid or no job type form");
-                    }
-
-                    if (string.IsNullOrEmpty(context.Request.QueryString["coordinates"]))
+                    if (string.IsNullOrEmpty(oJob.Location))
                     {
                         throw new Exception("Kindly provide current location");
                     }
 
-                    if (string.IsNullOrEmpty(context.Request.QueryString["details"]))
+                    if (string.IsNullOrEmpty(oJob.JobDetails))
                     {
                         throw new Exception("Kindly provide Job details");
                     }
                     
-                    if(context.Request.Files.Count <= 0)
+                    if(string.IsNullOrEmpty(oJob.FileURL))
                     {
-                        //throw new Exception("Kindly provide location Image");
+                        throw new Exception("Kindly provide location image");
                     }
 
-                    var location = context.Request.QueryString["coordinates"];
-                    var jobDetails = context.Request.QueryString["details"];
-                    //var file = context.Request.Files[0];
-                    JobsInfo oJob = new JobsInfo();
-                    oJob.UserId = userId;
-                    oJob.Location = location;
-                    oJob.JobTypeId = jobTypeId;
                     oJob.StatusId = 1;
-                    oJob.JobDetails = jobDetails;
-                    oJob.FileURL = "";
                     new JobFactory().PostJob(oJob);
-                    
-                    //file.SaveAs(context.Server.MapPath("~/JobFiles/" + oJob.Id + file.FileName));
+                    byte[] bytes = Convert.FromBase64String(oJob.FileURL);
+
+                    Image image;
+                    using (MemoryStream ms = new MemoryStream(bytes))
+                    {
+                        image = Image.FromStream(ms);
+                    }
+                    //string fileName = oJob.Id + new CommonMethods().GetRandomString(8) + ".jpeg";
+                    image.Save(context.Server.MapPath("~/JobFiles/" + oJob.FileURL));
+                    oJob.FileURL = ConfigurationManager.AppSettings["BaseURL"] + "JobFiles/" + oJob.FileURL;
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", oJob);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(oJob));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
 
                 }
                 #endregion
@@ -220,25 +237,26 @@ namespace NAIKI.Api
                 #region AcceptJob
                 if (methodName.ToLower() == "AcceptJob".ToLower())
                 {
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
                     }
-                    int jobTypeId = 0;
-                    int.TryParse(context.Request.QueryString["jID"], out jobTypeId);
-                    if (jobTypeId == 0)
+                    JobsInfo oJob = jsonSerializer.Deserialize<JobsInfo>(jsonString);
+                    if (oJob.UserId == 0)
                     {
-                        throw new Exception("Invalid or no job type form");
+                        throw new Exception("Invalid params");
                     }
-                    JobFactory oFactory = new JobFactory();
-
-                    oFactory.AcceptJob(userId , jobTypeId);
+                    if (oJob.Id == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    new JobFactory().AcceptJob(oJob.UserId , oJob.Id);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "ErrorMessage", "" } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
@@ -247,95 +265,119 @@ namespace NAIKI.Api
                 {
 
 
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
                     }
-                    int jobTypeId = 0;
-                    int.TryParse(context.Request.QueryString["jID"], out jobTypeId);
-                    if (jobTypeId == 0)
+                    JobsInfo oJob = jsonSerializer.Deserialize<JobsInfo>(jsonString);
+                    if (oJob.UserId == 0)
                     {
-                        throw new Exception("Invalid or no job type form");
+                        throw new Exception("Invalid params");
                     }
-                    JobFactory oFactory = new JobFactory();
-
-                    oFactory.MarkAsDoneJob(userId, jobTypeId);
+                    if (oJob.Id == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    new JobFactory().MarkAsDoneJob(oJob.UserId, oJob.Id);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "ErrorMessage", "" } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
                 #region GetMyJobs
                 if (methodName.ToLower() == "GetMyJobs".ToLower())
                 {
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
                     }
-
+                    UserInfo oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
+                    if (oUser.Id == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    var oJobs = new JobFactory().GetJobsByUserId(oUser.Id);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", oJobs);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new JobFactory().GetJobsByUserId(userId) } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
                 #region GetMyLibrary
                 if (methodName.ToLower() == "GetMyLibrary".ToLower())
                 {
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
                     }
-
+                    UserInfo oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
+                    if (oUser.Id == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    var oJobs = new JobFactory().GetMyLibrary(oUser.Id);
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", oJobs);
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new JobFactory().GetMyLibrary(userId) } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
                 #region GetAllBadges
                 if (methodName.ToLower() == "GetAllBadges".ToLower())
                 {
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", new RewardManagement().GetAllBadges());
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new RewardManagement().GetAllBadges() } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
                 #region GetBadgesByUserId
                 if (methodName.ToLower() == "GetBadgesByUserId".ToLower())
                 {
-                    int userId = 0;
-                    int.TryParse(context.Request.QueryString["uID"], out userId);
-                    if (userId == 0)
+                    using (var inputStream = new System.IO.StreamReader(context.Request.InputStream))
                     {
-                        throw new Exception("Invalid or no user id found");
+                        jsonString = inputStream.ReadToEnd();
                     }
+                    UserInfo oUser = jsonSerializer.Deserialize<UserInfo>(jsonString);
+                    if (oUser.Id == 0)
+                    {
+                        throw new Exception("Invalid params");
+                    }
+                    dict.Add("IsError", false);
+                    dict.Add("ErrorMessage", "");
+                    dict.Add("oData", new RewardManagement().GetBadgesByUserId(oUser.Id));
                     context.Response.ContentType = "application/json";
                     context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                    context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", false }, { "oData", new RewardManagement().GetBadgesByUserId(userId) } }));
+                    context.Response.Write(jsonSerializer.Serialize(dict));
+                    return;
                 }
                 #endregion
 
             }
             catch (Exception ex)
             {
+                dict.Add("IsError", true);
+                dict.Add("ErrorMessage", ex.Message);
                 context.Response.ContentType = "application/json";
                 context.Response.ContentEncoding = System.Text.Encoding.UTF8;
-
-                context.Response.Write(jsonSerializer.Serialize(new Dictionary<string, dynamic>() { { "IsError", true}, { "ErrorMessage", ex.Message } }));
+                context.Response.Write(jsonSerializer.Serialize(dict));
+                return;
                 
             }
             

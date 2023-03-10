@@ -192,7 +192,7 @@ namespace NAIKI.Services
                     eJob.PostedOn = DateTime.Now;
                     eDataBase.Jobs.InsertOnSubmit(eJob);
                     eDataBase.SubmitChanges();
-                    eJob.FileURL = eJob.Id + oJob.FileURL;
+                    eJob.FileURL = eJob.Id + new CommonMethods().GetRandomString(8) + ".jpeg";
                     eDataBase.SubmitChanges();
                     var eUsers = eDataBase.Users.Where(eUData => eUData.Id != oJob.UserId & eUData.IsActive == true & eUData.IsDeleted == false)
                                 .Select(eUSelect => new { Id = eUSelect.Id, oSetting = eUSelect.UserSettings.Where(eSData => eSData.IsActive == true & eSData.IsDeleted == false).FirstOrDefault() }).ToList();
@@ -213,6 +213,7 @@ namespace NAIKI.Services
                         new NotificationsManagement().NotifyExternal(uIDs);
                     }
                     oJob.Id = eJob.Id;
+                    oJob.FileURL = eJob.FileURL;
                 }
             }
             catch (Exception ex)
